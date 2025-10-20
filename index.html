@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RoadSense Demo – Map + Time Series</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+  <style>
+    :root { --bg:#0b1020; --panel:#101934; --text:#e7ecff; --muted:#9db0ff; --brand:#7aa2ff; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; background:var(--bg); color:var(--text); }
+    header { padding:16px 20px; background: linear-gradient(180deg,#0f1a36, #0b1020); border-bottom: 1px solid #1e2a52; }
+    h1 { margin:0; font-size: 18px; letter-spacing: .3px; }
+    main { padding: 16px 20px 28px; max-width: 1200px; margin: 0 auto; }
+    .grid { display:grid; grid-template-columns: 1fr; gap: 16px; }
+    @media (min-width: 980px) { .grid { grid-template-columns: 1.1fr .9fr; } }
+    .card { background: var(--panel); border:1px solid #1e2a52; border-radius: 14px; padding: 14px; }
+    .toolbar { display:flex; flex-wrap:wrap; gap:10px; align-items: end; margin-bottom: 10px; }
+    label { font-size: 12px; color: var(--muted); display:block; margin-bottom: 4px; }
+    input, select, button { padding: 8px 10px; border-radius: 10px; border:1px solid #2a3a72; background: #0e1630; color: var(--text); }
+    button { background: linear-gradient(180deg,#3556ff,#2745c6); border: 1px solid #3b5cff; cursor:pointer; }
+    button:hover { filter: brightness(1.05); }
+    #map { height: 420px; border-radius: 12px; overflow: hidden; }
+    canvas { background: #0b1330; border-radius: 12px; }
+    .kpis { display:grid; grid-template-columns: repeat(3,1fr); gap:10px; margin:10px 0 6px; }
+    .kpi { background:#0b1330; border:1px solid #1e2a52; border-radius:12px; padding:10px; text-align:center; }
+    .kpi .val { font-size: 22px; font-weight: 700; }
+    .status { margin: 8px 0 0; font-size: 13px; color: #aebdff; }
+    .muted { color:#aebdff; font-size:12px; }
+    .footer-note { margin-top:8px; font-size:12px; color:#89a2ff; }
+    a { color:#99b7ff; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>RoadSense Demo — Spatial & Temporal Visualization (No backend)</h1>
+  </header>
+  <main>
+    <div class="grid">
+      <section class="card" aria-labelledby="mapTitle">
+        <h2 id="mapTitle" class="muted">Map — Events & Near Miss Candidates</h2>
+        <div class="toolbar" role="group" aria-label="Filters">
+          <div>
+            <label for="start">Start</label>
+            <input id="start" type="datetime-local" />
+          </div>
+          <div>
+            <label for="end">End</label>
+            <input id="end" type="datetime-local" />
+          </div>
+          <div>
+            <label for="thresh">Near-miss threshold <span id="threshVal" class="muted"></span></label>
+            <input id="thresh" type="range" min="0" max="1" step="0.05" value="0.70" aria-describedby="threshHelp"/>
+            <div id="threshHelp" class="muted">Score ≥ threshold is treated as a near miss (demo only).</div>
+          </div>
+          <div>
+            <label for="onlyNear">Filter</label>
+            <select id="onlyNear">
+              <option value="all">All events</option>
+              <option value="near">Near-miss only</option>
+            </select>
+          </div>
+          <div>
+            <button id="apply">Apply Filters</button>
+            <button id="reset">Reset</button>
+            <button id="export">Export CSV</button>
+          </div>
+
+        </div>
+        <div id="map" aria-label="Event map"></div>
+        <div id="status" class="status" role="status"></div>
+        <div class="footer-note">Tip: drag the map, click markers for timestamps. Demo data: Perth/Crawley area.</div>
+      </section>
+
+      <aside class="card" aria-labelledby="chartTitle">
+        <h2 id="chartTitle" class="muted">Time Series</h2>
+        <div class="kpis">
+          <div class="kpi" aria-label="Visible events">
+            <div class="muted">Visible events</div>
+            <div id="kTotal" class="val">—</div>
+          </div>
+          <div class="kpi" aria-label="Near-miss count">
+            <div class="muted">Near-misses</div>
+            <div id="kNear" class="val">—</div>
+          </div>
+          <div class="kpi" aria-label="Avg speed (km/h)">
+            <div class="muted">Avg speed</div>
+            <div id="kSpeed" class="val">—</div>
+          </div>
+        </div>
+        <canvas id="timeseries" height="230"></canvas>
+        <div class="footer-note">Bins by hour over the selected window. Adjust threshold to see near-miss trend.</div>
+      </aside>
+    </div>
+    <p class="muted" style="margin-top:16px">Accessibility: labels for controls, keyboard focusable inputs, and high-contrast colors.</p>
+  </main>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/leaflet.heat/dist/leaflet-heat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="data.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
